@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly for mutation tests
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8.9.0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install
+      - name: Lint
+        run: pnpm lint
+
+  test-crypto-sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8.9.0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          pnpm install
+          pip install poetry
+          cd packages/crypto-sdk && poetry install
+      - name: Build crypto-sdk
+        run: pnpm --filter crypto-sdk build
+      - name: Run TypeScript tests
+        run: pnpm --filter crypto-sdk test
+      - name: Run Python tests
+        run: cd packages/crypto-sdk && poetry run pytest
+      - name: Run cross-language tests
+        run: cd packages/crypto-sdk && poetry run python tests/roundtrip.test.py
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./packages/crypto-sdk/coverage
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8.9.0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pnpm install
+          pip install bandit
+      - name: NPM audit
+        run: cd packages/crypto-sdk && npm audit --omit=dev
+      - name: Python security scan
+        run: bandit -r packages/crypto-sdk/src/py
+
+  mutation-testing:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'  # Only run on scheduled events
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8.9.0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          pnpm install
+          pip install poetry mutmut
+          cd packages/crypto-sdk && poetry install
+      - name: Build crypto-sdk
+        run: pnpm --filter crypto-sdk build
+      - name: Run TypeScript mutation tests
+        run: cd packages/crypto-sdk && pnpm test:mutation
+      - name: Run Python mutation tests
+        run: cd packages/crypto-sdk && mutmut run --paths-to-mutate src/py

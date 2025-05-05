@@ -1,0 +1,38 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "quantum-auth-crypto-sdk"
+version = "0.1.0"
+description = "Cross-language, post-quantum-ready crypto SDK"
+authors = ["Quantum Auth Team"]
+readme = "README.md"
+packages = [{include = "src/py", from = "."}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pynacl = "1.5.0"
+pqcrypto = "^0.3.1"
+cryptography = ">=42.0.0,<45.0"
+pydantic = "^2.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+hypothesis = "^6.87.0"
+mutmut = "^2.4.4"
+bandit = "^1.7.5"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "*.py"
+python_functions = "test_*"
+addopts = ""
+
+[tool.coverage.run]
+source = ["src/py"]
+omit = ["tests/*"]
+
+[tool.bandit]
+exclude_dirs = ["tests"]

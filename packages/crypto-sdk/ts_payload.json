@@ -1,0 +1,7 @@
+{
+  "algorithm": "x25519-kyber768-hybrid",
+  "ephemeral_public_key": "KNgV3wBSlf2kcvdrcGa1z0t7eCSmcG5r35KMHCL7DmM",
+  "kyber_ciphertext": "",
+  "nonce": "NBugCSFXcVM0rQoYbujoXADWgjFfHTI-",
+  "ciphertext": "K1JgkV-pmF101rBybRz8J30qrMJ5uxjqmEuyTdLPbylO03wzZArWgdaHOIUShhOv"
+}
